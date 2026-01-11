@@ -2,6 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Wallet as WalletWrapper } from "@coinbase/onchainkit/wallet";
+import TransactionBlock, {
+  parseTransactionSummary,
+} from "./components/TransactionBlock";
+import { toast } from "sonner";
 
 type ChatRole = "user" | "agent";
 
@@ -20,6 +24,20 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1">
+      <span
+        className="inline-block h-2 w-2 rounded-full bg-zinc-400/80"
+      />
+      <span
+        className="inline-block h-2 w-2 rounded-full bg-zinc-400/60"
+      />
+      <span className="inline-block h-2 w-2 rounded-full bg-zinc-400/40" />
+    </div>
+  );
+}
+
 export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -34,6 +52,15 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  const quickActions = useMemo(
+    () => [
+      "Cek Saldo",
+      "Transfer 10rb ke Kopi Kenangan",
+      "Laporan Pengeluaran",
+    ],
+    [],
+  );
+
   const canSend = useMemo(() => {
     return !isLoading && input.trim().length > 0;
   }, [input, isLoading]);
@@ -42,20 +69,21 @@ export default function Home() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, isLoading]);
 
-  async function sendMessage() {
-    const text = input.trim();
+  async function sendMessage(overrideText?: string, options?: { appendUser?: boolean }) {
+    const text = (overrideText ?? input).trim();
     if (!text || isLoading) return;
 
     setInput("");
 
-    const userMessage: ChatMessage = {
-      id: uid(),
-      role: "user",
-      content: text,
-      createdAt: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    if (options?.appendUser !== false) {
+      const userMessage: ChatMessage = {
+        id: uid(),
+        role: "user",
+        content: text,
+        createdAt: Date.now(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+    }
     setIsLoading(true);
 
     try {
@@ -99,6 +127,9 @@ export default function Home() {
 
       setMessages((prev) => [...prev, agentMessage]);
     } catch (e) {
+      toast.error("Gagal menghubungi server", {
+        description: "Coba lagi sebentar.",
+      });
       setMessages((prev) => [
         ...prev,
         {
@@ -136,6 +167,7 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             {messages.map((m) => {
               const isUser = m.role === "user";
+              const txSummary = !isUser ? parseTransactionSummary(m.content) : null;
               return (
                 <div
                   key={m.id}
@@ -150,6 +182,8 @@ export default function Home() {
                     ].join(" ")}
                   >
                     <p className="whitespace-pre-wrap">{m.content}</p>
+
+                    {txSummary ? <TransactionBlock summary={txSummary} /> : null}
                   </div>
                 </div>
               );
@@ -157,8 +191,14 @@ export default function Home() {
 
             {isLoading ? (
               <div className="flex w-full justify-start">
-                <div className="max-w-[85%] rounded-2xl bg-white px-4 py-2 text-sm text-zinc-600 ring-1 ring-black/5">
-                  Thinking...
+                <div className="max-w-[85%] animate-pulse rounded-2xl bg-zinc-100 px-4 py-3 text-sm text-zinc-700 ring-1 ring-black/5">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-zinc-500">
+                    KASRA
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TypingDots />
+                    <span className="text-xs text-zinc-500">memproses…</span>
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -170,6 +210,34 @@ export default function Home() {
         {/* Input Area */}
         <div className="sticky bottom-0 border-t border-black/5 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
           <div className="py-3">
+            <div className="mb-2 flex flex-wrap gap-2">
+              {quickActions.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => {
+                    const text = label.trim();
+                    if (!text || isLoading) return;
+
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        id: uid(),
+                        role: "user",
+                        content: text,
+                        createdAt: Date.now(),
+                      },
+                    ]);
+                    void sendMessage(text, { appendUser: false });
+                  }}
+                  className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2 rounded-2xl border border-black/10 bg-white px-3 py-2 shadow-sm">
               <input
                 value={input}
@@ -181,7 +249,7 @@ export default function Home() {
                   }
                 }}
                 disabled={isLoading}
-                placeholder={isLoading ? "Thinking..." : "Tulis pesan…"}
+                placeholder={isLoading ? "Memproses…" : "Tulis pesan…"}
                 className="flex-1 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-500 disabled:opacity-60"
                 aria-label="Message input"
               />

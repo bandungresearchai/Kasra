@@ -21,11 +21,14 @@ Required:
 - `CDP_API_KEY_NAME`
 - `CDP_API_KEY_PRIVATE_KEY`
 - `OPENAI_API_KEY`
+- `NEXT_PUBLIC_ONCHAINKIT_API_KEY` **or** `NEXT_PUBLIC_RPC_URL`
+- `NEXT_PUBLIC_IDRX_ADDRESS`
 
 Optional:
 
 - `NETWORK_ID` (default: `base-sepolia`)
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
+- `NEXT_PUBLIC_DEMO_RECIPIENT_ADDRESS`
 
 3) Run the dev server
 
@@ -50,3 +53,4 @@ curl -s http://localhost:3000/api/agent \
 ## Notes
 
 - The server may create `wallet_data.txt` at runtime to persist wallet state (ignored by git).
+- For Vercel: set the same env vars in the Vercel project dashboard, and ensure `NEXT_PUBLIC_*` keys are marked as Environment Variables (not secrets) so they are exposed to the client bundle.

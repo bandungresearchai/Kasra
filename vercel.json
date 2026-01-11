@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "cd kasra && npm install --legacy-peer-deps",
+  "buildCommand": "cd kasra && npm run build",
+  "outputDirectory": "kasra/.next",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}

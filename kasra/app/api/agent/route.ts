@@ -30,7 +30,13 @@ Your Operating Protocols:
    'Rincian Transaksi: [Ke: <Recipient> | Nominal: <Amount> | Kategori: <Category>]. Silakan tanda tangani di bawah.'
 `;
 
-let cachedAgentPromise: Promise<ReturnType<typeof createReactAgent>> | null = null;
+type AgentLike = {
+  invoke: (input: {
+    messages: Array<{ role: string; content: string }>;
+  }) => Promise<{ messages?: Array<{ content?: unknown }> }>;
+};
+
+let cachedAgentPromise: Promise<AgentLike> | null = null;
 
 async function fileExists(filePath: string) {
   try {
@@ -86,7 +92,11 @@ async function initAgent() {
     actionProviders: [walletActionProvider(), erc20ActionProvider()],
   });
 
-  const tools = await getLangChainTools(agentKit);
+  // agentkit-langchain returns LangChain tools; cast to the type expected by createReactAgent
+  // to avoid noisy TS incompatibility warnings without using `any`.
+  const tools = (await getLangChainTools(agentKit)) as Parameters<
+    typeof createReactAgent
+  >[0]["tools"];
 
   const llm = new ChatOpenAI({
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
@@ -97,7 +107,7 @@ async function initAgent() {
     llm,
     tools,
     messageModifier: KASRA_SYSTEM_PROMPT,
-  });
+  }) as unknown as AgentLike;
 }
 
 async function getAgent() {
