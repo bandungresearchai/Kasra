@@ -2,8 +2,12 @@
   "name": "kasra",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0 <22"
+  },
   "scripts": {
     "dev": "next dev",
+    "dev:workaround": "node scripts/dev-workaround.mjs --hostname 0.0.0.0 --port 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -12,6 +16,8 @@
     "@coinbase/agentkit": "^0.10.4",
     "@coinbase/agentkit-langchain": "^0.3.0",
     "@coinbase/onchainkit": "^1.1.2",
+    "@x402/evm": "^2.2.0",
+    "@x402/fetch": "^2.2.0",
     "@langchain/core": "^1.1.12",
     "@langchain/langgraph": "^1.0.14",
     "@langchain/openai": "^1.2.1",

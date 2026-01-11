@@ -8,8 +8,9 @@ import {
   TransactionStatusLabel,
   TransactionToast,
 } from "@coinbase/onchainkit/transaction";
-import type { Address } from "viem";
 import { formatIDR } from "../lib/formatIDR";
+
+type Address = `0x${string}`;
 
 const ERC20_TRANSFER_ABI = [
   {
